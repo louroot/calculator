@@ -31,16 +31,16 @@ public class InterestService {
     }
     
     private void validateCreditRequest(CreditRequest creditRequest) throws BadRequestException {
-        if (creditRequest.getAmount().equals(0D)) {
-            throw new BadRequestException("400#amount", "amount can't be 0");
+        if (creditRequest.getAmount() <= 0D) {
+            throw new BadRequestException("400#amount", "amount can't be lower than or equal to 0");
         }
 
-        if (creditRequest.getTerms().equals(0)) {
-            throw new BadRequestException("400#terms", "terms can't be 0");
+        if (creditRequest.getTerms() <= 0D) {
+            throw new BadRequestException("400#terms", "terms can't be lower than or equal to 0");
         }
 
-        if (creditRequest.getRate().equals(0D)) {
-            throw new BadRequestException("400#rate", "rate can't be 0");
+        if (creditRequest.getRate() <= 0D) {
+            throw new BadRequestException("400#rate", "rate can't be lower than or equal to 0");
         }
 
     }
@@ -49,20 +49,21 @@ public class InterestService {
         //simple interest formula is SI =(P X R X T) / 100
         //where SI = simple interest
         //P = principal
-        //R = interest rate
-        //T = time duration lets assume we get months
+        //R = annual interest rate
+        //T = time duration, lets assume we get months
         Double term = creditRequest.getTerms().doubleValue() / 12;
         Double simpleInterest = (creditRequest.getAmount() * (creditRequest.getRate()/100) * term);
         DateTime currentPlusWeek = new DateTime();
         List<Date> paydayList = new ArrayList<>();
-        double weeksToPay = (creditRequest.getTerms().doubleValue() * 52) / 12;
+        int weeksToPay = (int) (creditRequest.getTerms().doubleValue() * 52) / 12;
         for (int i = 1; i <= weeksToPay; i++) {
             currentPlusWeek = currentPlusWeek.plusWeeks(1);
             paydayList.add(currentPlusWeek.toDate());
         }
 
         int numberOfPaydays = paydayList.size();
-        double singlePayment = (creditRequest.getAmount() + simpleInterest) / numberOfPaydays;
+        //principal + interest = total payment
+        Double singlePayment = (creditRequest.getAmount() + simpleInterest) / numberOfPaydays;
         List<Payment> paymentList = new ArrayList<>();
         for(int i = 0; i < numberOfPaydays; i++) {
             Payment payment = Payment.builder()
